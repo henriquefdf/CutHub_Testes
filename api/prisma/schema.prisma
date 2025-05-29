@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoUsuario {
+  cliente
+  barbeiro
+  dono_barbearia
+}
+
+model Usuario {
+  id           Int         @id @default(autoincrement())
+  nome         String
+  email        String      @unique
+  tipo         TipoUsuario
+  senha        String
+  foto         String?     // URL da foto do usuário
+  chaveAws     String?     @unique
+  tokenRecPass String?     @unique @db.VarChar(255)
+  dateRecPass  DateTime?   @db.DateTime(3)
+  barbearia    Barbearia?  // Alterado para ser um relacionamento um-para-um
+  agendamento  Agendamento[]
+}
+
+
+model Barbearia {
+  id         Int       @id @default(autoincrement())
+  nome       String
+  endereco   String
+  foto       String?
+  chaveAws   String?   @unique
+  usuarioId  Int       @unique
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id])
+  servicos   Servico[]
+  agendamento Agendamento[]
+}
+
+model Servico {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  descricao   String
+  preco       Float
+  foto       String?
+  chaveAws    String?   @unique
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  agendamento Agendamento[]
+}
+
+//um usuario tem varios agendamentos, um servico tem varios agendamentos, uma barbearia tem varios agendamentos
+model Agendamento {
+  id          Int       @id @default(autoincrement())
+  data        DateTime  @db.Timestamp()
+  usuarioId   Int
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  servicoId   Int
+  servico     Servico   @relation(fields: [servicoId], references: [id])
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+}
