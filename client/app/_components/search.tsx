@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/app/_components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/app/_components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/app/_components/ui/form";
 import { Input } from "@/app/_components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -38,7 +44,10 @@ const Search = ({ defaultValues }: SearchProps) => {
   return (
     <div className="flex items-center gap-2">
       <Form {...form}>
-        <form className="flex w-full gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form
+          className="flex w-full gap-4"
+          onSubmit={form.handleSubmit(handleSubmit)}
+        >
           <FormField
             control={form.control}
             name="search"

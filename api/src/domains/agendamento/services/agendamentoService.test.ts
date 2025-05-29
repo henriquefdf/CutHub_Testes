@@ -1,11 +1,8 @@
 import agendamentoService from "./agendamentoService";
 import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";
 import prisma from "../../../../config/prismaClient";
-import { jest } from '@jest/globals';
-import { Agendamento, Barbearia, Servico, Usuario} from "@prisma/client";
-
-
-
+import { jest } from "@jest/globals";
+import { Agendamento, Barbearia, Servico, Usuario } from "@prisma/client";
 
 jest.mock("../../../../config/prismaClient", () => ({
   servico: {
@@ -26,7 +23,7 @@ jest.mock("../../../../config/prismaClient", () => ({
   },
 }));
 
-type AgendamentoInterface = Omit<Agendamento, 'id'> & {
+type AgendamentoInterface = Omit<Agendamento, "id"> & {
   id?: number;
   servicoId: number;
 };
@@ -37,7 +34,6 @@ describe("AgendamentoService", () => {
   });
 
   it("deve retornar uma lista de agendamentos do Cliente", async () => {
-
     const usuario = {
       id: 15,
       nome: "Cliente Teste",
@@ -65,53 +61,53 @@ describe("AgendamentoService", () => {
     jest.mocked(prisma.usuario.findFirst).mockResolvedValue(usuario);
     jest.mocked(prisma.agendamento.findMany).mockResolvedValue(agendamentos);
 
-    const resultado = await agendamentoService.listarAgendamentosCliente(15, "0");
+    const resultado = await agendamentoService.listarAgendamentosCliente(
+      15,
+      "0",
+    );
     console.log(resultado);
     expect(resultado).toEqual(agendamentos);
   });
 
-
-
   it("deve criar um novo agendamento", async () => {
-      const body = {
-        data: new Date(),
-        servicoId: 1,
-      } as AgendamentoInterface;
+    const body = {
+      data: new Date(),
+      servicoId: 1,
+    } as AgendamentoInterface;
 
-      const servico = {
-        id: 1,
-        nome: "Corte",
-        descricao: "Descrição do serviço",
-        preco: 50,
-        foto: null,
-        chaveAws: null,
-        barbeariaId: 1,
-      } as Servico;
-      const barbearia = {
-        id: 1,
-        nome: "Barbearia do Teste",
-        endereco: "Rua dos Testes, 123",
-        foto: "http://exemplo.com/foto.jpg",
-        chaveAws: "chave-s3",
-        usuarioId: 1,
-      }as Barbearia;
+    const servico = {
+      id: 1,
+      nome: "Corte",
+      descricao: "Descrição do serviço",
+      preco: 50,
+      foto: null,
+      chaveAws: null,
+      barbeariaId: 1,
+    } as Servico;
+    const barbearia = {
+      id: 1,
+      nome: "Barbearia do Teste",
+      endereco: "Rua dos Testes, 123",
+      foto: "http://exemplo.com/foto.jpg",
+      chaveAws: "chave-s3",
+      usuarioId: 1,
+    } as Barbearia;
 
-      const agendamento = {
-        id: 1,
-        data: body.data,
-        servicoId: body.servicoId,
-        barbeariaId: barbearia.id,
-        usuarioId: 1,
-      }as Agendamento;
+    const agendamento = {
+      id: 1,
+      data: body.data,
+      servicoId: body.servicoId,
+      barbeariaId: barbearia.id,
+      usuarioId: 1,
+    } as Agendamento;
 
-      jest.mocked(prisma.servico.findFirst).mockResolvedValue(servico);
-      jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(barbearia);
-      jest.mocked(prisma.agendamento.findFirst).mockResolvedValue(null);
-      jest.mocked(prisma.agendamento.create).mockResolvedValue(agendamento);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue(servico);
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(barbearia);
+    jest.mocked(prisma.agendamento.findFirst).mockResolvedValue(null);
+    jest.mocked(prisma.agendamento.create).mockResolvedValue(agendamento);
 
-      const resultado = await agendamentoService.criarAgendamento(body, 1);
-      expect(resultado).toEqual(agendamento);
-    
+    const resultado = await agendamentoService.criarAgendamento(body, 1);
+    expect(resultado).toEqual(agendamento);
   });
 
   it("deve retornar erro se a barbearia não for encontrada", async () => {
@@ -133,7 +129,9 @@ describe("AgendamentoService", () => {
     jest.mocked(prisma.servico.findFirst).mockResolvedValue(servico);
     jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(null);
 
-    await expect(agendamentoService.criarAgendamento(body, 1)).rejects.toThrow(new NotAuthorizedError("Barbearia não encontrada."));
+    await expect(agendamentoService.criarAgendamento(body, 1)).rejects.toThrow(
+      new NotAuthorizedError("Barbearia não encontrada."),
+    );
   });
 
   it("deve retornar erro se já existir um agendamento nesse horário", async () => {
@@ -158,7 +156,7 @@ describe("AgendamentoService", () => {
       foto: "http://exemplo.com/foto.jpg",
       chaveAws: "chave-s3",
       usuarioId: 1,
-    }as Barbearia;
+    } as Barbearia;
 
     const agendamento = {
       id: 1,
@@ -166,17 +164,18 @@ describe("AgendamentoService", () => {
       servicoId: body.servicoId,
       barbeariaId: barbearia.id,
       usuarioId: 1,
-    }as Agendamento;
+    } as Agendamento;
 
     jest.mocked(prisma.servico.findFirst).mockResolvedValue(servico);
     jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(barbearia);
     jest.mocked(prisma.agendamento.findFirst).mockResolvedValue(agendamento);
 
-    await expect(agendamentoService.criarAgendamento(body, 1)).rejects.toThrow(new NotAuthorizedError("Já existe um agendamento nesse horário."));
+    await expect(agendamentoService.criarAgendamento(body, 1)).rejects.toThrow(
+      new NotAuthorizedError("Já existe um agendamento nesse horário."),
+    );
   });
 
   it("deve retornar uma lista de agendamentos da Barbearia", async () => {
-
     const barbearia = {
       id: 1,
       nome: "Barbearia do Teste",
@@ -184,7 +183,7 @@ describe("AgendamentoService", () => {
       foto: "http://exemplo.com/foto.jpg",
       chaveAws: "chave-s3",
       usuarioId: 1,
-    }as Barbearia;
+    } as Barbearia;
     const agendamentos = [
       {
         id: 1,
@@ -210,7 +209,6 @@ describe("AgendamentoService", () => {
   });
 
   it("deve deletar um agendamento", async () => {
-
     const barbearia = {
       id: 1,
       nome: "Barbearia do Teste",
@@ -218,7 +216,7 @@ describe("AgendamentoService", () => {
       foto: "http://exemplo.com/foto.jpg",
       chaveAws: "chave-s3",
       usuarioId: 1,
-    }as Barbearia;
+    } as Barbearia;
 
     const agendamento = {
       id: 1,
@@ -235,8 +233,4 @@ describe("AgendamentoService", () => {
     const resultado = await agendamentoService.deletarAgendamento(1, 1);
     expect(resultado).toEqual(agendamento);
   });
-
-
-
 });
-

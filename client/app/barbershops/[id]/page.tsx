@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { AuthContext } from "@/app/_contexts/AuthContext";
 import BarbershopInfo from "./_components/barbershop-info";
@@ -10,52 +10,54 @@ import { Service, Barbershop } from "@/app/_services/types";
 import { getBarbershop } from "@/app/_services/routes/barbershop";
 
 interface BarbershopDetailPageProps {
-    params: {
-        id?: number;
-    }
+  params: {
+    id?: number;
+  };
 }
-
 
 const BarbershopDetailPage = ({ params }: BarbershopDetailPageProps) => {
+  const { isAuthenticated } = useContext(AuthContext);
 
-    const { isAuthenticated } =  useContext(AuthContext);
+  if (!params.id) {
+    return <h1>404</h1>;
+  }
 
-    if (!params.id) {
+  const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
 
-        return <h1>404</h1>
+  useEffect(() => {
+    const fetchBarbershops = async () => {
+      try {
+        const fetchedBarbershops = await getBarbershop(params.id!);
+        setBarbershop(fetchedBarbershops);
+      } catch (error) {
+        console.error("Erro ao listar barbearias", error);
+      }
     };
 
-    const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
+    fetchBarbershops();
+  }, []);
 
-    useEffect(() => {
-        const fetchBarbershops = async () => {
-            try {
-                const fetchedBarbershops = await getBarbershop(params.id!);
-                setBarbershop(fetchedBarbershops);
-            } catch (error) {
-                console.error('Erro ao listar barbearias', error);
-            }
-        };
+  //TODO: Implementar loading
+  if (!barbershop) {
+    return <h1>Carregando...</h1>;
+  }
 
-        fetchBarbershops();
-    }, []);
+  return (
+    <div>
+      <BarbershopInfo barbershop={barbershop!} />
 
-    //TODO: Implementar loading
-    if (!barbershop) {
-        return <h1>Carregando...</h1>
-    }
-
-    return (  
-       <div>
-            <BarbershopInfo barbershop={barbershop!}/>
-
-            <div className="flex flex-col gap-4 px-5 py-6">
-                    {barbershop!.servicos.map((service :Service) => (
-                        <ServiceItem key={service.id} service={service} barbershop={barbershop} isAutencticated={ isAuthenticated } />
-                    ))}
-            </div>
-        </div>
-    );
-}
+      <div className="flex flex-col gap-4 px-5 py-6">
+        {barbershop!.servicos.map((service: Service) => (
+          <ServiceItem
+            key={service.id}
+            service={service}
+            barbershop={barbershop}
+            isAutencticated={isAuthenticated}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default BarbershopDetailPage;

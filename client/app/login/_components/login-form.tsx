@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { AuthContext } from "@/app/_contexts/AuthContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/app/_components/ui/button"
+import { Button } from "@/app/_components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,11 +13,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/app/_components/ui/form"
-import { Input } from "@/app/_components/ui/input"
+} from "@/app/_components/ui/form";
+import { Input } from "@/app/_components/ui/input";
 import Image from "next/image";
 
-import { useToast } from "@/app/_components/ui/use-toast"
+import { useToast } from "@/app/_components/ui/use-toast";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Tipo de email inválido" }),
@@ -28,7 +28,7 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { signIn } = useContext(AuthContext);
-  const { toast } = useToast();  
+  const { toast } = useToast();
 
   const form = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
@@ -37,7 +37,7 @@ export function LoginForm() {
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     try {
       await signIn(data);
-    } catch (error:any) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro ao Entrar",
@@ -49,7 +49,13 @@ export function LoginForm() {
   return (
     <div className="flex justify-center items-center min-h-screen">
       <div className="flex flex-col items-center gap-3">
-        <Image src="/logo.png" alt="Logo" width={180} height={22} className="mb-5" />
+        <Image
+          src="/logo.png"
+          alt="Logo"
+          width={180}
+          height={22}
+          className="mb-5"
+        />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
             <FormField
@@ -62,7 +68,7 @@ export function LoginForm() {
                     <Input
                       placeholder="Insira seu email"
                       {...field}
-                      className='p-2 w-full'
+                      className="p-2 w-full"
                     />
                   </FormControl>
                   <FormMessage />
@@ -80,17 +86,16 @@ export function LoginForm() {
                       type="password"
                       placeholder="Insira sua senha"
                       {...field}
-                      className='p-2 w-full'
+                      className="p-2 w-full"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button variant="default" type="submit" className="w-full mt-4"> 
+            <Button variant="default" type="submit" className="w-full mt-4">
               Login
             </Button>
-
 
             <div className="text-center mt-3">
               <a href="/forgot-password" className="text-gray-400 text-sm">
@@ -105,14 +110,14 @@ export function LoginForm() {
             <div className="text-center">
               <span className="text-muted-foreground text-sm">
                 Não possui cadastro?
-              </span>
-              {' '}
-              <a href="/register" className="text-primary-foreground text-sm font-medium">
+              </span>{" "}
+              <a
+                href="/register"
+                className="text-primary-foreground text-sm font-medium"
+              >
                 Cadastre-se agora
               </a>
             </div>
-
-
           </form>
         </Form>
       </div>
