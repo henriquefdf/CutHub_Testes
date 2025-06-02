@@ -2,6 +2,9 @@ import { jest } from "@jest/globals";
 import prisma from "../../../../config/prismaClient";
 import servicoService from "./servicoService";
 import { NextFunction, Request } from "express";
+import { QueryError } from "../../../../errors/QueryError";
+import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";
+import { deleteObject } from "../../../../utils/functions/aws";
 
 // Extend Express Request type to include 'file'
 declare module "express-serve-static-core" {
@@ -111,6 +114,7 @@ describe("servicoService", () => {
       barbeariaId: 1,
     });
   });
+
   it("deve atualizar um serviço", async () => {
     const body = {
       nome: "Barba",
@@ -255,5 +259,133 @@ describe("servicoService", () => {
     expect(prisma.servico.findMany).toHaveBeenCalledWith({
       where: { barbeariaId: idBarbearia },
     });
+  });
+
+  // Novos testes para aumentar cobertura
+
+  it("criarServico lança QueryError quando barbearia não encontrada", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(null);
+    await expect(
+      servicoService.criarServico(
+        { nome: "X", descricao: "Y", preco: 10, id: 123, foto: null, chaveAws: null },
+        123,
+        null,
+      ),
+    ).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("criarServico lança QueryError quando serviço já existe", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 5 } as any);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue({ id: 10 } as any);
+    await expect(
+      servicoService.criarServico(
+        { nome: "Barba", descricao: "Corte", preco: 20, id: 123, foto: null, chaveAws: null },
+        1,
+        { location: "u", key: "k" } as any,
+      ),
+    ).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("editarServico lança QueryError quando barbearia não encontrada", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(null);
+    await expect(
+      servicoService.editarServico(
+        { id: 1, nome: "A", descricao: "B", preco: 30, foto: null, chaveAws: null },
+        99,
+        null,
+      ),
+    ).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("editarServico lança QueryError quando serviço não encontrado", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 2 } as any);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue(null);
+    await expect(
+      servicoService.editarServico(
+        { id: 2, nome: "A", descricao: "B", preco: 30, foto: null, chaveAws: null },
+        1,
+        null,
+      ),
+    ).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("editarServico lança NotAuthorizedError quando usuário não autorizado", async () => {
+    const serv = { id: 3, nome: "X", descricao: "Y", preco: 10, foto: "f", chaveAws: "k", barbeariaId: 8 };
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 5, usuarioId: 5 } as any);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue(serv as any);
+    await expect(
+      servicoService.editarServico(
+        { id: 3, nome: "X", descricao: "Y", preco: 10, foto: null, chaveAws: null },
+        5,
+        null,
+      ),
+    ).rejects.toBeInstanceOf(NotAuthorizedError);
+  });
+
+  it("editarServico lança QueryError quando nome duplicado", async () => {
+    const serv = { id: 4, nome: "Old", descricao: "Z", preco: 15, foto: "f", chaveAws: "k", barbeariaId: 7 };
+    const conflict = { id: 5, nome: "New", descricao: "W", preco: 20, foto: "f2", chaveAws: "k2", barbeariaId: 7 };
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 7 } as any);
+    jest.mocked(prisma.servico.findFirst)
+      .mockResolvedValueOnce(serv as any) // primeiro findFirst retorna serv
+      .mockResolvedValueOnce(conflict as any); // segundo findFirst retorna conflito
+    await expect(
+      servicoService.editarServico(
+        { id: 4, nome: "New", descricao: "B", preco: 25, foto: null, chaveAws: null },
+        1,
+        null,
+      ),
+    ).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("editarServico mantém foto e chaveAws quando file é null", async () => {
+    const existing = { id: 6, nome: "T", descricao: "D", preco: 40, foto: "old.jpg", chaveAws: "oldkey", barbeariaId: 9 };
+    const updated = { id: 6, nome: "T", descricao: "D", preco: 40, foto: "old.jpg", chaveAws: "oldkey", barbeariaId: 9 };
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 9 } as any);
+    jest.mocked(prisma.servico.findFirst)
+      .mockResolvedValueOnce(existing as any)
+      .mockResolvedValueOnce(null as any);
+    jest.mocked(prisma.servico.update).mockResolvedValue(updated as any);
+    const resultado = await servicoService.editarServico(
+      { id: 6, nome: "T", descricao: "D", preco: 40, foto: null, chaveAws: null },
+      1,
+      null,
+    );
+    expect(resultado).toEqual(updated);
+  });
+
+  it("editarServico chama deleteObject quando houver file", async () => {
+    const existing = { id: 10, nome: "U", descricao: "V", preco: 50, foto: "exists.jpg", chaveAws: "existskey", barbeariaId: 11 };
+    const newFile = { location: "new.jpg", key: "newkey" } as any;
+    const updated = { id: 10, nome: "U", descricao: "V", preco: 50, foto: "new.jpg", chaveAws: "newkey", barbeariaId: 11 };
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 11 } as any);
+    jest.mocked(prisma.servico.findFirst)
+      .mockResolvedValueOnce(existing as any)
+      .mockResolvedValueOnce(null as any);
+    jest.mocked(prisma.servico.update).mockResolvedValue(updated as any);
+    const resultado = await servicoService.editarServico(
+      { id: 10, nome: "U", descricao: "V", preco: 50, foto: null, chaveAws: null },
+      1,
+      newFile,
+    );
+    expect(deleteObject).toHaveBeenCalledWith("existskey");
+    expect(resultado).toEqual(updated);
+  });
+
+  it("deletarServico lança QueryError quando barbearia não encontrada", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(null);
+    await expect(servicoService.deletarServico(1, 2)).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("deletarServico lança QueryError quando serviço não encontrado", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 3 } as any);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue(null);
+    await expect(servicoService.deletarServico(2, 3)).rejects.toBeInstanceOf(QueryError);
+  });
+
+  it("deletarServico lança NotAuthorizedError quando usuário não autorizado", async () => {
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 4 } as any);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue({ id: 5, nome: "X", descricao: "Y", preco: 60, foto: "f", chaveAws: "k", barbeariaId: 99 } as any);
+    await expect(servicoService.deletarServico(5, 4)).rejects.toBeInstanceOf(NotAuthorizedError);
   });
 });

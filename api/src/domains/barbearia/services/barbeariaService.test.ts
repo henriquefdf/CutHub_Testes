@@ -1,19 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/domains/barbearia/services/barbeariaService.test.ts
-
 import { jest } from "@jest/globals";
 import prisma from "../../../../config/prismaClient";
 import barbeariaService from "./barbeariaService";
 import { deleteObject } from "../../../../utils/functions/aws";
-import { NextFunction } from "express";
+import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";
 
-// Mocking necessary modules
+// Mantém mocks existentes
 jest.mock("multer-s3", () => ({
   __esModule: true,
   default: jest.fn(() => ({
     single: jest
       .fn()
-      .mockReturnValue((req: any, res: Response, next: NextFunction) => {
+      .mockReturnValue((req: any, res: any, next: any) => {
         req.file = { location: "http://exemplo.com/foto.jpg", key: "chave-s3" };
         next();
       }),
@@ -27,6 +24,7 @@ jest.mock("../../../../config/prismaClient", () => ({
       create: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      // findMany não está mockado originalmente; será atribuído nos testes onde necessário
     },
   },
 }));
@@ -94,7 +92,7 @@ describe("barbeariaService", () => {
       jest.clearAllMocks();
     });
 
-    it("deve editar uma barbearia existente com sucesso", async () => {
+    it("deve editar uma barbearia existente com sucesso (com file)", async () => {
       const body = {
         id: 1,
         nome: "Barbearia Editada",
@@ -108,7 +106,6 @@ describe("barbeariaService", () => {
         key: "nova-chave-s3",
       } as Express.MulterS3.File;
 
-      // Mock para encontrar a barbearia existente
       jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({
         id: 1,
         nome: "Barbearia Original",
@@ -118,7 +115,6 @@ describe("barbeariaService", () => {
         usuarioId: usuarioId,
       });
 
-      // Mock para a atualização da barbearia
       jest.mocked(prisma.barbearia.update).mockResolvedValue({
         ...body,
         usuarioId: usuarioId,
@@ -155,27 +151,145 @@ describe("barbeariaService", () => {
         foto: null,
         chaveAws: null,
       };
-      const usuarioId = 2; // ID diferente do usuário da barbearia
+      const usuarioId = 2;
 
-      const file = {
-        location: "http://exemplo.com/foto.jpg",
-        key: "chave-s3",
-      } as Express.MulterS3.File;
-
-      await barbeariaService.criarBarbearia(
-        {
-          nome: body.nome,
-          endereco: body.endereco,
-          foto: file ? (file as Express.MulterS3.File).location : null,
-          chaveAws: file ? (file as Express.MulterS3.File).key : null,
-        },
-        usuarioId,
-        file,
-      );
+      jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({
+        id: 1,
+        nome: "Barbearia Original",
+        endereco: "Rua Original, 123",
+        foto: "http://exemplo.com/foto_original.jpg",
+        chaveAws: "chave-original-s3",
+        usuarioId: 1, // proprietário diferente
+      });
 
       await expect(
         barbeariaService.editarBarbearia(body, usuarioId, null),
-      ).rejects.toThrow("Usuário não autorizado.");
+      ).rejects.toBeInstanceOf(NotAuthorizedError);
     });
+  });
+
+  // Novos testes para aumentar cobertura
+
+  it("editarBarbearia mantém foto e chaveAws quando file é null", async () => {
+    const existing = {
+      id: 2,
+      nome: "Barbearia Existente",
+      endereco: "Rua Existente, 789",
+      foto: "http://exemplo.com/foto_existente.jpg",
+      chaveAws: "chave-existente-s3",
+      usuarioId: 3,
+    };
+    const body = {
+      id: 2,
+      nome: "Barbearia Atualizada",
+      endereco: "Rua Atualizada, 101",
+      foto: null,
+      chaveAws: null,
+    };
+    const usuarioId = 3;
+
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(existing as any);
+    jest.mocked(prisma.barbearia.update).mockResolvedValue({
+      ...existing,
+      nome: body.nome,
+      endereco: body.endereco,
+    } as any);
+
+    const resultado = await barbeariaService.editarBarbearia(body, usuarioId, null);
+
+    expect(prisma.barbearia.update).toHaveBeenCalledWith({
+      where: { id: body.id! },
+      data: {
+        nome: body.nome,
+        endereco: body.endereco,
+        foto: existing.foto,
+        chaveAws: existing.chaveAws,
+      },
+    });
+    expect(resultado).toEqual({
+      ...existing,
+      nome: body.nome,
+      endereco: body.endereco,
+    });
+  });
+
+  it("editarBarbearia lança Error quando id não informado", async () => {
+    const existing = {
+      id: 5,
+      nome: "Barbearia X",
+      endereco: "Rua X, 000",
+      foto: "foto.jpg",
+      chaveAws: "chave.jpg",
+      usuarioId: 4,
+    };
+    const body = {
+      // id ausente
+      nome: "Barbearia Nova",
+      endereco: "Rua Nova, 111",
+      foto: null,
+      chaveAws: null,
+    };
+    const usuarioId = 4;
+
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(existing as any);
+
+    await expect(
+      barbeariaService.editarBarbearia(body as any, usuarioId, null),
+    ).rejects.toThrow("Id da barbearia não informado.");
+  });
+
+  it("listarBarbearias retorna lista de barbearias", async () => {
+    const mockList = [
+      { id: 1, nome: "A", endereco: "E1", foto: "f1", chaveAws: "k1", usuarioId: 1 },
+      { id: 2, nome: "B", endereco: "E2", foto: "f2", chaveAws: "k2", usuarioId: 2 },
+    ];
+    // Como findMany não foi mockado originalmente, atribuímos aqui
+    (prisma.barbearia.findMany as jest.Mock) = jest.fn().mockResolvedValue(mockList as never);
+
+    const resultado = await barbeariaService.listarBarbearias();
+
+    expect(prisma.barbearia.findMany).toHaveBeenCalledTimes(1);
+    expect(resultado).toEqual(mockList);
+  });
+
+  it("listarBarbearia retorna uma barbearia com serviços", async () => {
+    const mockBarbearia = {
+      id: 3,
+      nome: "Barbearia C",
+      endereco: "E3",
+      foto: "f3",
+      chaveAws: "k3",
+      usuarioId: 3,
+      servicos: [
+        { id: 10, nome: "Serviço 1", descricao: "D1", preco: 25, foto: "s1", chaveAws: "sk1", barbeariaId: 3 },
+      ],
+    };
+    (prisma.barbearia.findFirst as jest.Mock).mockResolvedValue(mockBarbearia as never);
+
+    const resultado = await barbeariaService.listarBarbearia(3);
+
+    expect(prisma.barbearia.findFirst).toHaveBeenCalledWith({
+      where: { id: 3 },
+      include: { servicos: true },
+    });
+    expect(resultado).toEqual(mockBarbearia);
+  });
+
+  it("listarBarbeariasPorNome retorna barbearias filtradas por nome", async () => {
+    const mockFiltered = [
+      { id: 4, nome: "TesteNome", endereco: "E4", foto: "f4", chaveAws: "k4", usuarioId: 4 },
+    ];
+    (prisma.barbearia.findMany as jest.Mock) = jest.fn().mockResolvedValue(mockFiltered as never);
+
+    const resultado = await barbeariaService.listarBarbeariasPorNome("Teste");
+
+    expect(prisma.barbearia.findMany).toHaveBeenCalledWith({
+      where: {
+        nome: {
+          contains: "Teste",
+        },
+      },
+    });
+    expect(resultado).toEqual(mockFiltered);
   });
 });
