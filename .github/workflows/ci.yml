@@ -32,24 +32,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 3) Cria o arquivo .env em ./api
-      - name: Create .env file
-        shell: bash
-        run: |
-          cat <<EOF > .env
-          APP_URL=http://localhost:3000
-          PORT=3030
-          DATABASE_URL=mysql://root:pwd@localhost:3306/cuthub
-          SECRET_KEY=cu7Hu3
-          JWT_EXPIRATION=3d
-          AWS_ACCESS_KEY_ID=valor
-          AWS_SECRET_ACCESS_KEY=Valor
-          AWS_BUCKET_REGION=sa-east-1
-          AWS_BUCKET_NAME=geoprospect
-          EMAIL_ACCOUNT=teste1@gmail.com
-          EMAIL_PASSWORD=123
-          EOF
-
       # 4) Instala as dependências do back-end
       - name: Install dependencies
         run: npm ci
@@ -60,6 +42,18 @@ jobs:
 
       # 6) Roda os testes unitários com coverage
       - name: Run tests with coverage
-        run: npm test -- --coverage
         env:
+          APP_URL: http://localhost:3000
+          PORT: 3030
+          DATABASE_URL: mysql://root:pwd@localhost:3306/cuthub
+          SECRET_KEY: cu7Hu3
+          JWT_EXPIRATION: 3d
+          AWS_ACCESS_KEY_ID: valor
+          AWS_SECRET_ACCESS_KEY: Valor
+          AWS_BUCKET_REGION: sa-east-1
+          AWS_BUCKET_NAME: geoprospect
+          EMAIL_ACCOUNT: teste1@gmail.com
+          EMAIL_PASSWORD: 123
           NODE_ENV: test
+        run: npm test -- --coverage
+
