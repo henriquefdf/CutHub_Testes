@@ -1,6 +1,6 @@
+
 name: CI
 
-# Dispara em push e pull request na branch main
 on:
   push:
     branches: [ main ]
@@ -9,57 +9,56 @@ on:
 
 jobs:
   test-backend:
-    # Matrix para rodar em Linux, macOS e Windows, com Node 18.x
+    # Matrix: roda em Linux, macOS e Windows, usando Node 18.x
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [18.x]
 
-    # # Serviço de MySQL que será iniciado no runner
-    # services:
-    #   mysql:
-    #     image: mysql:latestl
-    #     env:
-    #       MYSQL_ROOT_PASSWORD: pwd
-    #       MYSQL_DATABASE: cuthub
-    #     ports:
-    #       - 3306:3306
-
+    # Define que todos os comandos serão executados dentro de ./api
     defaults:
       run:
         working-directory: ./api
 
     steps:
-      # 1) Pega o código do repositório
+      # 1) Faz checkout do repositório
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Instala a versão de Node definida na matrix
+      # 2) Configura Node.js na versão da matrix
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 3) Instala as dependências do back-end
+      # 3) Cria o arquivo .env em ./api
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          APP_URL=http://localhost:3000
+          PORT=3030
+          DATABASE_URL=mysql://root:pwd@localhost:3306/cuthub
+          SECRET_KEY=cu7Hu3
+          JWT_EXPIRATION=3d
+          AWS_ACCESS_KEY_ID=valor
+          AWS_SECRET_ACCESS_KEY=Valor
+          AWS_BUCKET_REGION=sa-east-1
+          AWS_BUCKET_NAME=geoprospect
+          EMAIL_ACCOUNT=teste1@gmail.com
+          EMAIL_PASSWORD=123
+          EOF
+
+      # 4) Instala as dependências do back-end
       - name: Install dependencies
         run: npm ci
 
-      # 4) Gera o client do Prisma
+      # 5) Gera o Prisma Client
       - name: Generate Prisma client
         run: npx prisma generate
 
-      # 5) Executa os testes com coverage
+      # 6) Roda os testes unitários com coverage
       - name: Run tests with coverage
         run: npm test -- --coverage
         env:
           NODE_ENV: test
-
-# +     # --------------------------------------------------------
-# +     # Quando já tiver CODECOV_TOKEN no Secrets
-# +     # --------------------------------------------------------
-# +     - name: Upload coverage to Codecov
-# +       uses: codecov/codecov-action@v3
-# +       with:
-# +         files: ./coverage/*.json
-# +         token: ${{ secrets.CODECOV_TOKEN }}
