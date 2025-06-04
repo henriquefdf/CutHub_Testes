@@ -1,0 +1,82 @@
+name: CI
+
+# Dispara em push e pull request na branch main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    # Matrix para rodar em Linux, macOS e Windows, com Node 18.x
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [18.x]
+
+    # Serviço de MySQL que será iniciado no runner
+    services:
+      mysql:
+        image: mysql:latestl
+        env:
+          MYSQL_ROOT_PASSWORD: pwd
+          MYSQL_DATABASE: cuthub
+        ports:
+          - 3306:3306
+
+    defaults:
+      run:
+        working-directory: ./api
+
+    steps:
+      # 1) Pega o código do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2) Instala a versão de Node definida na matrix
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # 3) Aguarda o MySQL ficar pronto
+      - name: Wait for MySQL service to be ready
+        run: |
+          for i in {1..30}; do
+            # testa se a porta 3306 está aceitando conexões
+            nc -z localhost 3306 && echo "MySQL is up!" && break
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      # 4) Instala as dependências do back-end
+      - name: Install dependencies
+        run: npm ci
+
+      # 5) Gera o client do Prisma
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # 6) Executa as migrations (caso você já tenha migrations configuradas)
+      - name: Run Prisma migrations
+        env:
+          DATABASE_URL: mysql://root:pwd@localhost:3306/cuthub
+        run: npx prisma migrate deploy
+
+      # 7) Executa os testes com coverage
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: mysql://root:pwd@localhost:3306/cuthub
+        run: npm test -- --coverage
+
+      # 8) Envio da cobertura para o Codecov
+      #    descomentar esta etapa assim que tiver configurado o CODECOV_TOKEN
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./coverage/*.json
+      #     # Se você usar um token privado do Codecov, defina na seção "Secrets" do GitHub: 
+      #     # name: CODECOV_TOKEN, value: <seu-token>
+      #     token: ${{ secrets.CODECOV_TOKEN }}
