@@ -58,3 +58,11 @@ jobs:
       # 6) Testes + cobertura
       - name: Run tests with coverage
         run: npm test -- --coverage --runInBand --detectOpenHandles
+
+      # 7) Enviar cobertura ao Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./api/coverage
+
