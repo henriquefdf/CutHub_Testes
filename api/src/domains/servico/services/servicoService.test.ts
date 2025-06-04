@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { jest } from "@jest/globals";
 import prisma from "../../../../config/prismaClient";
 import servicoService from "./servicoService";

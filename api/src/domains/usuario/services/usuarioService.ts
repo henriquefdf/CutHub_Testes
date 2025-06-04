@@ -48,7 +48,7 @@ class UsuarioService {
   async updateUsuario(
     body: Usuario,
     usuarioLogado: Usuario,
-    foto: Express.Multer.File | Express.MulterS3.File,
+    foto?: Express.Multer.File | Express.MulterS3.File,
   ) {
     const findUser = await prisma.usuario.findUnique({
       where: { id: usuarioLogado.id },
