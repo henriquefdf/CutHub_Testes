@@ -1,60 +1,60 @@
-
 name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test-backend:
-    # Matrix: roda em Linux, macOS e Windows, usando Node 18.x
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [18.x]
+        node-version: [18.x]      # use a LTS única em todas as máquinas
 
-    # Define que todos os comandos serão executados dentro de ./api
+    # todos os comandos abaixo executam dentro de ./api
     defaults:
       run:
         working-directory: ./api
+        shell: bash 
 
     steps:
-      # 1) Faz checkout do repositório
+      # 1) Checkout
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Configura Node.js na versão da matrix
+      # 2) Node
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 3) Instala as dependências do back-end
+      # 3) Constrói o .env a partir dos Secrets
+      - name: Create .env file from secrets
+        run: |
+          echo "APP_URL=${{ secrets.APP_URL }}"                >> .env
+          echo "PORT=${{ secrets.PORT }}"                      >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"      >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"          >> .env
+          echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}"  >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}"           >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}"   >> .env
+          echo "AWS_BUCKET_REGION=${{ secrets.AWS_BUCKET_REGION }}"           >> .env
+          echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}"               >> .env
+          echo "EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}"    >> .env
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}"  >> .env
+          echo "NODE_ENV=test"                                 >> .env
+
+      # 4) Dependências
       - name: Install dependencies
         run: npm ci
 
-      # 4) Gera o Prisma Client
+      # 5) Prisma
       - name: Generate Prisma client
         run: npx prisma generate
 
-      # 5) Roda os testes unitários com coverage
+      # 6) Testes + cobertura
       - name: Run tests with coverage
-        env:
-          APP_URL: http://localhost:3000
-          PORT: 3030
-          DATABASE_URL: mysql://root:pwd@localhost:3306/cuthub
-          SECRET_KEY: cu7Hu3
-          JWT_EXPIRATION: 3d
-          AWS_ACCESS_KEY_ID: valor
-          AWS_SECRET_ACCESS_KEY: Valor
-          AWS_BUCKET_REGION: sa-east-1
-          AWS_BUCKET: geoprospect 
-          AWS_BUCKET_NAME: geoprospect
-          EMAIL_ACCOUNT: teste1@gmail.com
-          EMAIL_PASSWORD: 123
-          NODE_ENV: test
-        run: npm test -- --coverage
-
+        run: npm test -- --coverage --runInBand --detectOpenHandles
