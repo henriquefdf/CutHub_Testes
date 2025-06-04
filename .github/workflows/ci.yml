@@ -34,6 +34,7 @@ jobs:
 
       # 3) Cria o arquivo .env em ./api
       - name: Create .env file
+        shell: bash
         run: |
           cat <<EOF > .env
           APP_URL=http://localhost:3000
