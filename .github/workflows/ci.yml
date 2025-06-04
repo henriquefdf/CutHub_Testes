@@ -32,15 +32,15 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 4) Instala as dependências do back-end
+      # 3) Instala as dependências do back-end
       - name: Install dependencies
         run: npm ci
 
-      # 5) Gera o Prisma Client
+      # 4) Gera o Prisma Client
       - name: Generate Prisma client
         run: npx prisma generate
 
-      # 6) Roda os testes unitários com coverage
+      # 5) Roda os testes unitários com coverage
       - name: Run tests with coverage
         env:
           APP_URL: http://localhost:3000
@@ -51,6 +51,7 @@ jobs:
           AWS_ACCESS_KEY_ID: valor
           AWS_SECRET_ACCESS_KEY: Valor
           AWS_BUCKET_REGION: sa-east-1
+          AWS_BUCKET: geoprospect 
           AWS_BUCKET_NAME: geoprospect
           EMAIL_ACCOUNT: teste1@gmail.com
           EMAIL_PASSWORD: 123
