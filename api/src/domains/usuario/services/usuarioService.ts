@@ -58,7 +58,9 @@ class UsuarioService {
       body.senha = await this.encryptPassword(body.senha);
     }
     if (foto) {
-      deleteObject(findUser?.chaveAws);
+      if (findUser?.chaveAws) {
+        deleteObject(findUser.chaveAws);
+      }
       body.foto = (foto as Express.MulterS3.File).location;
       body.chaveAws = (foto as Express.MulterS3.File).key;
     } else {

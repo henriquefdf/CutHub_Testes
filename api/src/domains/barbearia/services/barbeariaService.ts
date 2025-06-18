@@ -44,7 +44,9 @@ export class barbeariaService {
     }
 
     if (file) {
-      deleteObject(barbearia?.chaveAws);
+      if (barbearia?.chaveAws) {
+        deleteObject(barbearia.chaveAws);
+      }
       body.foto = (file as Express.MulterS3.File).location;
       body.chaveAws = (file as Express.MulterS3.File).key;
     } else {

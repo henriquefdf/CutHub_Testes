@@ -71,7 +71,9 @@ export class servicoService {
       throw new QueryError("Serviço já existe.");
 
     if (file) {
-      deleteObject(servico?.chaveAws);
+      if (servico?.chaveAws) {
+        deleteObject(servico.chaveAws);
+      }
       body.foto = (file as Express.MulterS3.File).location;
       body.chaveAws = (file as Express.MulterS3.File).key;
     } else {

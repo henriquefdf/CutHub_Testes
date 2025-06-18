@@ -30,7 +30,8 @@
   "scripts": {
     "start": "npx prisma generate && npx prisma migrate deploy && nodemon index.ts",
     "dev": "nodemon index.ts",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "seed": "ts-node prisma/seed.ts"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.7",
