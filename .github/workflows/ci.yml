@@ -36,10 +36,10 @@ jobs:
         uses: shogo82148/actions-setup-mysql@v1
         with:
           mysql-version: "8.0"
-          root-password: "pwd"           # mesma senha do DATABASE_URL
+          root-password: "pwd"           
           database: "cuthub_test"
           my-cnf: |
-            port=3307                   # mantém a porta que já está no .env.test
+            port=3307
 
       # 4) Constrói o .env e .env.test a partir dos Secrets (mantido)
       - name: Create .env and .env.test file from secrets
