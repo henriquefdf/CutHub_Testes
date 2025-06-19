@@ -44,6 +44,9 @@ jobs:
       # 4) Constrói o .env e .env.test a partir dos Secrets (mantido)
       - name: Create .env and .env.test file from secrets
         run: |
+
+          rm -f .env .env.test
+          
           echo "APP_URL=${{ secrets.APP_URL }}"                             >> .env
           echo "PORT=${{ secrets.PORT }}"                                   >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"                   >> .env
@@ -55,7 +58,7 @@ jobs:
           echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}"             >> .env
           echo "EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}"                 >> .env
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}"               >> .env
-          echo "NODE_ENV=test"                                              >> .env
+          echo "NODE_ENV=node"                                              >> .env
 
           echo "PORT=3031"                                                  >> .env.test
           echo "DATABASE_URL=mysql://root:pwd@127.0.0.1:3307/cuthub_test"   >> .env.test
