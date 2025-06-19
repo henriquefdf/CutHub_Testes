@@ -46,7 +46,7 @@ jobs:
         run: |
 
           rm -f .env .env.test
-          
+
           echo "APP_URL=${{ secrets.APP_URL }}"                             >> .env
           echo "PORT=${{ secrets.PORT }}"                                   >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"                   >> .env
@@ -60,7 +60,7 @@ jobs:
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}"               >> .env
           echo "NODE_ENV=node"                                              >> .env
 
-          echo "PORT=3031"                                                  >> .env.test
+          echo "PORT=3031"                                                  > .env.test
           echo "DATABASE_URL=mysql://root:pwd@127.0.0.1:3307/cuthub_test"   >> .env.test
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"                       >> .env.test
           echo "JWT_EXPIRATION=1h"                                          >> .env.test
