@@ -91,7 +91,7 @@ jobs:
 
       # 7) Testes + cobertura
       - name: Run tests with coverage
-        run: npm test -- --coverage --runInBand --detectOpenHandles
+        run: npm run test:all
 
       # 8) Enviar cobertura ao Codecov
       - name: Upload coverage to Codecov
