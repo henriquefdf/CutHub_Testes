@@ -44,30 +44,30 @@ jobs:
       # 4) Constrói o .env e .env.test a partir dos Secrets (mantido)
       - name: Create .env and .env.test file from secrets
         run: |
-          echo "APP_URL=${{ secrets.APP_URL }}"                >> .env
-          echo "PORT=${{ secrets.PORT }}"                      >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"      >> .env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"          >> .env
-          echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}"  >> .env
+          echo "APP_URL=${{ secrets.APP_URL }}"                             >> .env
+          echo "PORT=${{ secrets.PORT }}"                                   >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"                   >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"                       >> .env
+          echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}"               >> .env
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}"         >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
           echo "AWS_BUCKET_REGION=${{ secrets.AWS_BUCKET_REGION }}"         >> .env
           echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}"             >> .env
-          echo "EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}"    >> .env
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}"  >> .env
-          echo "NODE_ENV=test"                                 >> .env
+          echo "EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}"                 >> .env
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}"               >> .env
+          echo "NODE_ENV=test"                                              >> .env
 
-          echo "PORT=3031"                                     >> .env.test
-          echo "DATABASE_URL=\"mysql://root:pwd@127.0.0.1:3307/cuthub_test\"" >> .env.test
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"          >> .env.test
-          echo "JWT_EXPIRATION=1h"                             >> .env.test
-          echo "AWS_ACCESS_KEY_ID=fake"                        >> .env.test
-          echo "AWS_SECRET_ACCESS_KEY=fake"                    >> .env.test
-          echo "AWS_BUCKET_REGION=us-east-2"                   >> .env.test
-          echo "AWS_BUCKET_NAME=fake-bucket"                   >> .env.test
-          echo "EMAIL_ACCOUNT=test@example.com"                >> .env.test
-          echo "EMAIL_PASSWORD=test"                           >> .env.test
-          echo "NODE_ENV=test"                                 >> .env.test
+          echo "PORT=3031"                                                  >> .env.test
+          echo "DATABASE_URL=mysql://root:pwd@127.0.0.1:3307/cuthub_test"   >> .env.test
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"                       >> .env.test
+          echo "JWT_EXPIRATION=1h"                                          >> .env.test
+          echo "AWS_ACCESS_KEY_ID=fake"                                     >> .env.test
+          echo "AWS_SECRET_ACCESS_KEY=fake"                                 >> .env.test
+          echo "AWS_BUCKET_REGION=us-east-2"                                >> .env.test
+          echo "AWS_BUCKET_NAME=fake-bucket"                                >> .env.test
+          echo "EMAIL_ACCOUNT=test@example.com"                             >> .env.test
+          echo "EMAIL_PASSWORD=test"                                        >> .env.test
+          echo "NODE_ENV=test"                                              >> .env.test
 
       # 5) Dependências
       - name: Install dependencies
