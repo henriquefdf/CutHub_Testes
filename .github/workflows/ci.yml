@@ -26,35 +26,39 @@ jobs:
       with:
         node-version: ${{ matrix.node }}
 
-    # ────────────── 1) instala MySQL em cada SO ──────────────
-    - name: Install MySQL on Ubuntu
+       # ---------- Ubuntu ----------
+    - name: Install & configure MySQL (Ubuntu)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update -qq
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
         sudo systemctl start mysql
-        # define senha root = pwd e cria DB de integração
-        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'pwd';"
+        # define senha root e cria DB
+        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'pwd'; FLUSH PRIVILEGES;"
         mysql -u root -ppwd -e "CREATE DATABASE cuthub_test;"
 
-    - name: Install MySQL on macOS
+    # ---------- macOS ----------
+    - name: Install & configure MySQL (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install mysql@8
-        brew services start mysql@8
-        # espera subir
-        sleep 15
-        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'pwd';"
+        brew install mysql@8.0
+        brew services start mysql@8.0
+        # espera o daemon subir
+        sleep 20
+        # altera pwd (por padrão root sem senha)
+        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'pwd';"
         mysql -u root -ppwd -e "CREATE DATABASE cuthub_test;"
 
-    - name: Install MySQL on Windows
+    # ---------- Windows ----------
+    - name: Install & configure MySQL (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
         choco install mysql --params '/Password=pwd' -y
-        # aguarda serviço iniciar
-        Start-Sleep -Seconds 20
-        "CREATE DATABASE cuthub_test;" | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -uroot -ppwd
+        # demora um pouco p/ serviço subir
+        Start-Sleep -Seconds 60
+        $mysqlExe = 'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe'
+        & $mysqlExe -uroot -ppwd -e "CREATE DATABASE cuthub_test;"
 
     # ────────────── 2) gera envs ──────────────
     - name: Create .env and .env.test
@@ -76,7 +80,7 @@ jobs:
 
         cat <<EOF > .env.test
         PORT=3031
-        DATABASE_URL="mysql://root:pwd@127.0.0.1:3307/cuthub_test"
+        DATABASE_URL="mysql://root:pwd@127.0.0.1:3306/cuthub_test"
         SECRET_KEY=${{ secrets.SECRET_KEY }}
         JWT_EXPIRATION=1h
         AWS_ACCESS_KEY_ID=fake
