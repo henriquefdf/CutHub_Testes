@@ -41,7 +41,7 @@ jobs:
           my-cnf: |
             port=3307
 
-      # 4) Constrói o .env e .env.test a partir dos Secrets (mantido)
+      # 4) Constrói o .env e .env.test a partir dos Secrets
       - name: Create .env and .env.test file from secrets
         run: |
 
@@ -72,15 +72,6 @@ jobs:
           echo "EMAIL_PASSWORD=test"                                        >> .env.test
           echo "NODE_ENV=test"                                              >> .env.test
 
-      # 4.x) Debug (temporário) para inspecionar .env
-      - name: "Debug: show .env and .env.test"
-        run: |
-          echo "Conteúdo de .env:"
-          cat .env || echo "(não existe .env)"
-          echo "------"
-          echo "Conteúdo de .env.test:"
-          cat .env.test || echo "(não existe .env.test)"
-
       # 5) Dependências
       - name: Install dependencies
         run: npm ci
@@ -89,7 +80,7 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      # 7) Testes + cobertura
+      # 7) Testes( unitario e integracao ) + cobertura
       - name: Run tests with coverage
         run: npm run test:all
 
