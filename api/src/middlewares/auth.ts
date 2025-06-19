@@ -7,7 +7,7 @@ import { TokenError } from "../../errors/TokenError";
 import { Usuario } from "@prisma/client";
 import prisma from "../../config/prismaClient";
 import { getEnv } from "../../utils/functions/getEnv";
-import { loginError } from "../../errors/loginError";
+import { LoginError } from "../../errors/LoginError";
 
 declare module "express" {
   interface Request {
@@ -87,7 +87,7 @@ export function notLoggedIn(req: Request, res: Response, next: NextFunction) {
     if (token) {
       const decoded = verify(token, getEnv("SECRET_KEY") || "");
       if (decoded) {
-        throw new loginError("Você já está logado no sistema!");
+        throw new LoginError("Você já está logado no sistema!");
       }
     }
     next();

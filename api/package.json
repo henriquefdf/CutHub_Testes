@@ -7,7 +7,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.11.0",
+    "@prisma/client": "^6.10.0",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.11.26",
@@ -29,8 +29,10 @@
   },
   "scripts": {
     "start": "npx prisma generate && npx prisma migrate deploy && nodemon index.ts",
-    "dev": "nodemon index.ts",
-    "test": "jest --coverage",
+    "dev": "npx prisma generate && nodemon index.ts",
+    "test": "jest --coverage --testPathIgnorePatterns=/tests/.*\\.test\\.ts$",
+    "test:int": "cross-env NODE_ENV=test dotenv -e .env.test -- prisma migrate reset --force --skip-seed --skip-generate && jest --config jest.int.config.js --runInBand",
+    "test:all": "npm test && npm run test:int",
     "seed": "ts-node prisma/seed.ts"
   },
   "devDependencies": {
@@ -44,6 +46,8 @@
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
     "codecov": "^3.8.2",
+    "cross-env": "^7.0.3",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "supertest": "^7.1.1",

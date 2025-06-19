@@ -4,7 +4,7 @@ import multerS3 from "multer-s3";
 import { randomBytes } from "crypto";
 
 export const s3 = new S3Client({
-  region: "sa-east-1",
+  region: process.env.AWS_BUCKET_REGION!,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
@@ -15,7 +15,7 @@ export const upload = multer({
   storage: multerS3({
     s3: s3,
     acl: "public-read",
-    bucket: "geoprospect",
+    bucket: process.env.AWS_BUCKET_NAME!,
     contentType: multerS3.AUTO_CONTENT_TYPE,
 
     key: function (req, file, cb) {

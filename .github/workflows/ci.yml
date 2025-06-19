@@ -12,57 +12,78 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [18.x]      # use a LTS única em todas as máquinas
+        node-version: [18.x]
 
-    # todos os comandos abaixo executam dentro de ./api
+    services:
+      db-test:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: pwd
+          MYSQL_DATABASE: cuthub_test
+        ports:
+          - 3307:3306
+
     defaults:
       run:
         working-directory: ./api
-        shell: bash 
+        shell: bash
 
     steps:
-      # 1) Checkout
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      # 2) Node
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
-      # 3) Constrói o .env a partir dos Secrets
-      - name: Create .env file from secrets
+      # 1) generate .env for normal use
+      - name: Create .env
         run: |
-          echo "APP_URL=${{ secrets.APP_URL }}"                >> .env
-          echo "PORT=${{ secrets.PORT }}"                      >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"      >> .env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"          >> .env
-          echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}"  >> .env
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}"           >> .env
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}"   >> .env
-          echo "AWS_BUCKET_REGION=${{ secrets.AWS_BUCKET_REGION }}"           >> .env
-          echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}"               >> .env
-          echo "EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}"    >> .env
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}"  >> .env
-          echo "NODE_ENV=test"                                 >> .env
+          cat <<EOF > .env
+          APP_URL=${{ secrets.APP_URL }}
+          PORT=${{ secrets.PORT }}
+          DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_BUCKET_REGION=${{ secrets.AWS_BUCKET_REGION }}
+          AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+          EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}
+          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+          EXPORT NODE_ENV=development
+          EOF
 
-      # 4) Dependências
+      # 2) generate .env.test pointing at the db-test service
+      - name: Create .env.test
+        run: |
+          cat <<EOF > .env.test
+          APP_URL=$APP_URL
+          PORT=3031
+          DATABASE_URL="mysql://root:pwd@localhost:3307/cuthub_test"
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          JWT_EXPIRATION=1h
+          AWS_ACCESS_KEY_ID=fake
+          AWS_SECRET_ACCESS_KEY=fake
+          AWS_BUCKET_REGION=us-east-2
+          AWS_BUCKET_NAME=fake-bucket
+          EMAIL_ACCOUNT=test@example.com
+          EMAIL_PASSWORD=test
+          NODE_ENV=test
+          EOF
+
       - name: Install dependencies
         run: npm ci
 
-      # 5) Prisma
-      - name: Generate Prisma client
+      - name: Generate Prisma client (dev)
         run: npx prisma generate
 
-      # 6) Testes + cobertura
-      - name: Run tests with coverage
-        run: npm test -- --coverage --runInBand --detectOpenHandles
+      - name: Run all tests
+        run: npm test
 
-      # 7) Enviar cobertura ao Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./api/coverage
-

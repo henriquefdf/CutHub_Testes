@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   mysql:
     image: mysql:latest
@@ -8,4 +10,16 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./bd\mysql_data:/var/lib/mysql
+      - ./bd/mysql_data:/var/lib/mysql
+
+  # banco de testes isolado
+  db-test:
+    image: mysql:latest
+    container_name: cuthub_test
+    environment:
+      MYSQL_ROOT_PASSWORD: pwd
+      MYSQL_DATABASE: cuthub_test
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./bd/mysql_test_data:/var/lib/mysql

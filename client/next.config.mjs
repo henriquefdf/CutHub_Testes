@@ -5,8 +5,11 @@ const nextConfig = {
       {
         // (https://geoprospect.s3.sa-east-1.amazonaws.com/a1d3e7bb36687d09f2dc)
         // hostname: "geoprospect.s3.sa-east-1.amazonaws.com",
-        hostname: 'utfs.io'
+        hostname: 'cuthub-bucket.s3.us-east-2.amazonaws.com'
       },
+      {
+        hostname: 'utfs.io',
+      }
     ],
   },
 };
