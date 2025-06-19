@@ -1,4 +1,4 @@
-name: CI
+name: CI – unit + integration on all OS
 
 on:
   push:
@@ -7,83 +7,98 @@ on:
     branches: [main]
 
 jobs:
-  test-backend:
+  tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [18.x]
-
-    services:
-      db-test:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: pwd
-          MYSQL_DATABASE: cuthub_test
-        ports:
-          - 3307:3306
+        node: [18.x]
 
     defaults:
       run:
-        working-directory: ./api
         shell: bash
+        working-directory: ./api 
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node }}
 
-      # 1) generate .env for normal use
-      - name: Create .env
-        run: |
-          cat <<EOF > .env
-          APP_URL=${{ secrets.APP_URL }}
-          PORT=${{ secrets.PORT }}
-          DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_BUCKET_REGION=${{ secrets.AWS_BUCKET_REGION }}
-          AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
-          EMAIL_ACCOUNT=${{ secrets.EMAIL_ACCOUNT }}
-          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-          EXPORT NODE_ENV=development
-          EOF
+    # ────────────── 1) instala MySQL em cada SO ──────────────
+    - name: Install MySQL on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update -qq
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+        sudo systemctl start mysql
+        # define senha root = pwd e cria DB de integração
+        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'pwd';"
+        mysql -u root -ppwd -e "CREATE DATABASE cuthub_test;"
 
-      # 2) generate .env.test pointing at the db-test service
-      - name: Create .env.test
-        run: |
-          cat <<EOF > .env.test
-          APP_URL=$APP_URL
-          PORT=3031
-          DATABASE_URL="mysql://root:pwd@localhost:3307/cuthub_test"
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          JWT_EXPIRATION=1h
-          AWS_ACCESS_KEY_ID=fake
-          AWS_SECRET_ACCESS_KEY=fake
-          AWS_BUCKET_REGION=us-east-2
-          AWS_BUCKET_NAME=fake-bucket
-          EMAIL_ACCOUNT=test@example.com
-          EMAIL_PASSWORD=test
-          NODE_ENV=test
-          EOF
+    - name: Install MySQL on macOS
+      if: runner.os == 'macOS'
+      run: |
+        brew install mysql@8
+        brew services start mysql@8
+        # espera subir
+        sleep 15
+        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'pwd';"
+        mysql -u root -ppwd -e "CREATE DATABASE cuthub_test;"
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install MySQL on Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        choco install mysql --params '/Password=pwd' -y
+        # aguarda serviço iniciar
+        Start-Sleep -Seconds 20
+        "CREATE DATABASE cuthub_test;" | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -uroot -ppwd
 
-      - name: Generate Prisma client (dev)
-        run: npx prisma generate
+    # ────────────── 2) gera envs ──────────────
+    - name: Create .env and .env.test
+      run: |
+        cat <<EOF > .env
+        APP_URL=${{ secrets.APP_URL }}
+        PORT=${{ secrets.PORT }}
+        DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}
+        SECRET_KEY=${{ secrets.SECRET_KEY }}
+        JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
+        AWS_ACCESS_KEY_ID=fake
+        AWS_SECRET_ACCESS_KEY=fake
+        AWS_BUCKET_REGION=us-east-2
+        AWS_BUCKET_NAME=fake
+        EMAIL_ACCOUNT=fake
+        EMAIL_PASSWORD=fake
+        NODE_ENV=development
+        EOF
 
-      - name: Run all tests
-        run: npm test
+        cat <<EOF > .env.test
+        PORT=3031
+        DATABASE_URL="mysql://root:pwd@127.0.0.1:3307/cuthub_test"
+        SECRET_KEY=${{ secrets.SECRET_KEY }}
+        JWT_EXPIRATION=1h
+        AWS_ACCESS_KEY_ID=fake
+        AWS_SECRET_ACCESS_KEY=fake
+        AWS_BUCKET_REGION=us-east-2
+        AWS_BUCKET_NAME=fake-bucket
+        EMAIL_ACCOUNT=test@example.com
+        EMAIL_PASSWORD=test
+        NODE_ENV=test
+        EOF
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./api/coverage
+    # ────────────── 3) dependências + prisma ──────────────
+    - run: npm ci
+    - run: npx prisma generate
+
+    # ────────────── 4) tests ──────────────
+    - name: Run unit + integration tests
+      run: npm run test:all
+
+    # ────────────── 5) cobertura opcional ──────────────
+    - name: Upload coverage
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: ./api/coverage
