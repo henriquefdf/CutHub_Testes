@@ -69,6 +69,15 @@ jobs:
           echo "EMAIL_PASSWORD=test"                                        >> .env.test
           echo "NODE_ENV=test"                                              >> .env.test
 
+      # 4.x) Debug (temporário) para inspecionar .env
+      - name: "Debug: show .env and .env.test"
+        run: |
+          echo "Conteúdo de .env:"
+          cat .env || echo "(não existe .env)"
+          echo "------"
+          echo "Conteúdo de .env.test:"
+          cat .env.test || echo "(não existe .env.test)"
+
       # 5) Dependências
       - name: Install dependencies
         run: npm ci
