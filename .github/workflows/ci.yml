@@ -32,22 +32,26 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
-        sudo systemctl start mysql
-        # define senha root e cria DB
-        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'pwd'; FLUSH PRIVILEGES;"
-        mysql -u root -ppwd -e "CREATE DATABASE cuthub_test;"
+        sudo systemctl start mysql 
+        sudo mysql -e \
+          "ALTER USER 'root'@'localhost' \
+          IDENTIFIED WITH mysql_native_password BY 'pwd'; \
+          FLUSH PRIVILEGES; \
+          CREATE DATABASE IF NOT EXISTS cuthub_test;"
 
     # ---------- macOS ----------
     - name: Install & configure MySQL (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install mysql@8.0
-        brew services start mysql@8.0
-        # espera o daemon subir
-        sleep 20
-        # altera pwd (por padrão root sem senha)
-        mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'pwd';"
-        mysql -u root -ppwd -e "CREATE DATABASE cuthub_test;"
+          brew update >/dev/null
+          brew install --quiet mysql
+          brew services start mysql
+          sleep 20
+          mysql -u root -e \
+            "ALTER USER 'root'@'localhost' IDENTIFIED BY 'pwd'; \
+            FLUSH PRIVILEGES;"
+          mysql -u root -ppwd -e "CREATE DATABASE IF NOT EXISTS cuthub_test;"
+
 
     # ---------- Windows ----------
     - name: Install & configure MySQL (Windows)
@@ -55,10 +59,10 @@ jobs:
       shell: pwsh
       run: |
         choco install mysql --params '/Password=pwd' -y
-        # demora um pouco p/ serviço subir
-        Start-Sleep -Seconds 60
+        # instalações em Windows levam mais tempo; aguarde o serviço
+        Start-Sleep -Seconds 90
         $mysqlExe = 'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe'
-        & $mysqlExe -uroot -ppwd -e "CREATE DATABASE cuthub_test;"
+        & $mysqlExe -uroot -ppwd -e "CREATE DATABASE IF NOT EXISTS cuthub_test;"
 
     # ────────────── 2) gera envs ──────────────
     - name: Create .env and .env.test
