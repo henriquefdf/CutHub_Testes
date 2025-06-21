@@ -50,7 +50,7 @@ class UsuarioService {
     usuarioLogado: Usuario,
     foto?: Express.Multer.File | Express.MulterS3.File,
   ) {
-/*     const findUser = await prisma.usuario.findUnique({
+    /*     const findUser = await prisma.usuario.findUnique({
       where: { id: usuarioLogado.id },
     }); */
 
@@ -58,7 +58,7 @@ class UsuarioService {
       body.senha = await this.encryptPassword(body.senha);
     }
     if (foto) {
-/*       if (findUser?.chaveAws) {
+      /*       if (findUser?.chaveAws) {
         deleteObject(findUser.chaveAws);
       } */
       body.foto = (foto as Express.MulterS3.File).location;

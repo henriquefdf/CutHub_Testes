@@ -462,17 +462,15 @@ describe("servicoService", () => {
 
   it("deletarServico lança NotAuthorizedError quando usuário não autorizado", async () => {
     jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({ id: 4 } as any);
-    jest
-      .mocked(prisma.servico.findFirst)
-      .mockResolvedValue({
-        id: 5,
-        nome: "X",
-        descricao: "Y",
-        preco: 60,
-        foto: "f",
-        chaveAws: "k",
-        barbeariaId: 99,
-      } as any);
+    jest.mocked(prisma.servico.findFirst).mockResolvedValue({
+      id: 5,
+      nome: "X",
+      descricao: "Y",
+      preco: 60,
+      foto: "f",
+      chaveAws: "k",
+      barbeariaId: 99,
+    } as any);
     await expect(servicoService.deletarServico(5, 4)).rejects.toBeInstanceOf(
       NotAuthorizedError,
     );

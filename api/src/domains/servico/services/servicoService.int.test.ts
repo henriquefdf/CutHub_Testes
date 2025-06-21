@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import servicoService from "../services/servicoService";
 import { QueryError } from "../../../../errors/QueryError";
 import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";

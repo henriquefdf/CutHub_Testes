@@ -56,8 +56,8 @@ describe("UsuarioService", () => {
       email: "test@test.com",
       senha: "password",
       tipo: "cliente",
-      foto: 'teste_foto_url.jpg',
-      chaveAws: 'teste_chave_aws',
+      foto: "teste_foto_url.jpg",
+      chaveAws: "teste_chave_aws",
       tokenRecPass: null,
       dateRecPass: null,
     };
