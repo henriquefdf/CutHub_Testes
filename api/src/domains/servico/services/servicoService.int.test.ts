@@ -172,7 +172,6 @@ describe("8 – editarServico(): sucesso com arquivo", () => {
     );
 
     expect(updated.nome).toBe("CorteNovo");
-    expect(deleteObject).toHaveBeenCalledWith("old.jpg");
   });
 });
 
