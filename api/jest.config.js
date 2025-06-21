@@ -1,8 +1,15 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+const { verbose, collectCoverage } = require("./jest.config.int");
+
 module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-  verbose: true,
-  collectCoverage: true,
-  collectCoverageFrom: ["src/**/*Service.ts"],
+    projects: [
+    '<rootDir>/jest.config.unit.js',
+    '<rootDir>/jest.config.int.js',
+    ],
+
+  coverageDirectory: 'coverage',
+  coverageReporters: ['json', 'lcov', 'text', 'clover'],
+collectCoverageFrom: ["src/**/*Service.ts"],
+verbose: true,
+collectCoverage: true,
+
 };

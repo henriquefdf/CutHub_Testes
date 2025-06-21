@@ -32,7 +32,7 @@
     "dev": "npx prisma generate && nodemon index.ts",
     "test": "jest --coverage --testPathIgnorePatterns=\".*\\.int\\.test\\.ts$\"",
     "test:int": "cross-env NODE_ENV=test dotenv -e .env.test -- prisma migrate reset --force --skip-seed --skip-generate && jest --coverage --config jest.int.config.js --runInBand",
-    "test:all": "cross-env NODE_ENV=test dotenv -e .env.test -- prisma migrate reset --force --skip-seed --skip-generate && jest --coverage --runInBand",
+    "test:all": "jest --coverage --runInBand",
     "seed": "ts-node prisma/seed.ts"
   },
   "devDependencies": {
@@ -50,6 +50,7 @@
     "dotenv-cli": "^8.0.0",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
+    "nyc": "^17.1.0",
     "supertest": "^7.1.1",
     "ts-jest": "^29.3.4"
   }
