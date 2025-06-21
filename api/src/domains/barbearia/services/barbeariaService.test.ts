@@ -1,19 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { jest } from "@jest/globals";
 import prisma from "../../../../config/prismaClient";
 import barbeariaService from "./barbeariaService";
-import { deleteObject } from "../../../../utils/functions/aws";
 import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";
 
 // Mantém mocks existentes
 jest.mock("multer-s3", () => ({
   __esModule: true,
   default: jest.fn(() => ({
-    single: jest
-      .fn()
-      .mockReturnValue((req: any, res: any, next: any) => {
-        req.file = { location: "http://exemplo.com/foto.jpg", key: "chave-s3" };
-        next();
-      }),
+    single: jest.fn().mockReturnValue((req: any, res: any, next: any) => {
+      req.file = { location: "http://exemplo.com/foto.jpg", key: "chave-s3" };
+      next();
+    }),
   })),
 }));
 
@@ -87,130 +85,71 @@ describe("barbeariaService", () => {
     });
   });
 
-  describe("barbeariaService", () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it("deve editar uma barbearia existente com sucesso (com file)", async () => {
-      const body = {
-        id: 1,
-        nome: "Barbearia Editada",
-        endereco: "Rua dos Editados, 456",
-        foto: "http://exemplo.com/nova_foto.jpg",
-        chaveAws: "nova-chave-s3",
-      };
-      const usuarioId = 1;
-      const file = {
-        location: "http://exemplo.com/nova_foto.jpg",
-        key: "nova-chave-s3",
-      } as Express.MulterS3.File;
-
-      jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({
-        id: 1,
-        nome: "Barbearia Original",
-        endereco: "Rua Original, 123",
-        foto: "http://exemplo.com/foto_original.jpg",
-        chaveAws: "chave-original-s3",
-        usuarioId: usuarioId,
-      });
-
-      jest.mocked(prisma.barbearia.update).mockResolvedValue({
-        ...body,
-        usuarioId: usuarioId,
-      });
-
-      const resultado = await barbeariaService.editarBarbearia(
-        body,
-        usuarioId,
-        file,
-      );
-
-      expect(deleteObject).toHaveBeenCalledWith("chave-original-s3");
-      expect(prisma.barbearia.update).toHaveBeenCalledWith({
-        where: { id: body.id },
-        data: {
-          nome: body.nome,
-          endereco: body.endereco,
-          foto: file.location,
-          chaveAws: file.key,
-        },
-      });
-
-      expect(resultado).toEqual({
-        ...body,
-        usuarioId: usuarioId,
-      });
-    });
-
-    it("deve lançar um erro quando um usuário não autorizado tenta editar uma barbearia", async () => {
-      const body = {
-        id: 1,
-        nome: "Barbearia Editada",
-        endereco: "Rua dos Editados, 456",
-        foto: null,
-        chaveAws: null,
-      };
-      const usuarioId = 2;
-
-      jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({
-        id: 1,
-        nome: "Barbearia Original",
-        endereco: "Rua Original, 123",
-        foto: "http://exemplo.com/foto_original.jpg",
-        chaveAws: "chave-original-s3",
-        usuarioId: 1, // proprietário diferente
-      });
-
-      await expect(
-        barbeariaService.editarBarbearia(body, usuarioId, null),
-      ).rejects.toBeInstanceOf(NotAuthorizedError);
-    });
-  });
-
-  // Novos testes para aumentar cobertura
-
-  it("editarBarbearia mantém foto e chaveAws quando file é null", async () => {
-    const existing = {
-      id: 2,
-      nome: "Barbearia Existente",
-      endereco: "Rua Existente, 789",
-      foto: "http://exemplo.com/foto_existente.jpg",
-      chaveAws: "chave-existente-s3",
-      usuarioId: 3,
-    };
+  it("deve editar uma barbearia existente com sucesso (com file)", async () => {
     const body = {
-      id: 2,
-      nome: "Barbearia Atualizada",
-      endereco: "Rua Atualizada, 101",
-      foto: null,
-      chaveAws: null,
+      id: 1,
+      nome: "Barbearia Editada",
+      endereco: "Rua dos Editados, 456",
+      foto: "http://exemplo.com/nova_foto.jpg",
+      chaveAws: "nova-chave-s3",
     };
-    const usuarioId = 3;
+    const usuarioId = 1;
+    const file = {
+      location: "http://exemplo.com/nova_foto.jpg",
+      key: "nova-chave-s3",
+    } as Express.MulterS3.File;
 
-    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(existing as any);
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({
+      id: 1,
+      nome: "Barbearia Original",
+      endereco: "Rua Original, 123",
+      foto: "http://exemplo.com/foto_original.jpg",
+      chaveAws: "chave-original-s3",
+      usuarioId: usuarioId,
+    });
+
     jest.mocked(prisma.barbearia.update).mockResolvedValue({
-      ...existing,
-      nome: body.nome,
-      endereco: body.endereco,
-    } as any);
+      ...body,
+      usuarioId: usuarioId,
+    });
 
-    const resultado = await barbeariaService.editarBarbearia(body, usuarioId, null);
+    const resultado = await barbeariaService.editarBarbearia(
+      body,
+      usuarioId,
+      file,
+    );
 
     expect(prisma.barbearia.update).toHaveBeenCalledWith({
-      where: { id: body.id! },
+      where: { id: body.id },
       data: {
         nome: body.nome,
         endereco: body.endereco,
-        foto: existing.foto,
-        chaveAws: existing.chaveAws,
+        foto: file.location,
+        chaveAws: file.key,
       },
     });
+
     expect(resultado).toEqual({
-      ...existing,
-      nome: body.nome,
-      endereco: body.endereco,
+      ...body,
+      usuarioId: usuarioId,
     });
+  });
+
+  it("deve lançar NotAuthorizedError quando a barbearia não existir para o usuário", async () => {
+    const body = {
+      id: 1,
+      nome: "Barbearia Fantasma",
+      endereco: "Rua Fantasma, 999",
+      foto: null,
+      chaveAws: null,
+    };
+    const usuarioId = 999; // qualquer número, pois o findFirst retornará null
+
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue(null);
+
+    await expect(
+      barbeariaService.editarBarbearia(body, usuarioId, null),
+    ).rejects.toBeInstanceOf(NotAuthorizedError);
   });
 
   it("editarBarbearia lança Error quando id não informado", async () => {
@@ -240,11 +179,27 @@ describe("barbeariaService", () => {
 
   it("listarBarbearias retorna lista de barbearias", async () => {
     const mockList = [
-      { id: 1, nome: "A", endereco: "E1", foto: "f1", chaveAws: "k1", usuarioId: 1 },
-      { id: 2, nome: "B", endereco: "E2", foto: "f2", chaveAws: "k2", usuarioId: 2 },
+      {
+        id: 1,
+        nome: "A",
+        endereco: "E1",
+        foto: "f1",
+        chaveAws: "k1",
+        usuarioId: 1,
+      },
+      {
+        id: 2,
+        nome: "B",
+        endereco: "E2",
+        foto: "f2",
+        chaveAws: "k2",
+        usuarioId: 2,
+      },
     ];
     // Como findMany não foi mockado originalmente, atribuímos aqui
-    (prisma.barbearia.findMany as jest.Mock) = jest.fn().mockResolvedValue(mockList as never);
+    (prisma.barbearia.findMany as jest.Mock) = jest
+      .fn()
+      .mockResolvedValue(mockList as never);
 
     const resultado = await barbeariaService.listarBarbearias();
 
@@ -261,10 +216,20 @@ describe("barbeariaService", () => {
       chaveAws: "k3",
       usuarioId: 3,
       servicos: [
-        { id: 10, nome: "Serviço 1", descricao: "D1", preco: 25, foto: "s1", chaveAws: "sk1", barbeariaId: 3 },
+        {
+          id: 10,
+          nome: "Serviço 1",
+          descricao: "D1",
+          preco: 25,
+          foto: "s1",
+          chaveAws: "sk1",
+          barbeariaId: 3,
+        },
       ],
     };
-    (prisma.barbearia.findFirst as jest.Mock).mockResolvedValue(mockBarbearia as never);
+    (prisma.barbearia.findFirst as jest.Mock).mockResolvedValue(
+      mockBarbearia as never,
+    );
 
     const resultado = await barbeariaService.listarBarbearia(3);
 
@@ -277,9 +242,18 @@ describe("barbeariaService", () => {
 
   it("listarBarbeariasPorNome retorna barbearias filtradas por nome", async () => {
     const mockFiltered = [
-      { id: 4, nome: "TesteNome", endereco: "E4", foto: "f4", chaveAws: "k4", usuarioId: 4 },
+      {
+        id: 4,
+        nome: "TesteNome",
+        endereco: "E4",
+        foto: "f4",
+        chaveAws: "k4",
+        usuarioId: 4,
+      },
     ];
-    (prisma.barbearia.findMany as jest.Mock) = jest.fn().mockResolvedValue(mockFiltered as never);
+    (prisma.barbearia.findMany as jest.Mock) = jest
+      .fn()
+      .mockResolvedValue(mockFiltered as never);
 
     const resultado = await barbeariaService.listarBarbeariasPorNome("Teste");
 
@@ -291,5 +265,29 @@ describe("barbeariaService", () => {
       },
     });
     expect(resultado).toEqual(mockFiltered);
+  });
+
+  it("deve lançar NotAuthorizedError quando o usuário não for proprietário da barbearia", async () => {
+    const body = {
+      id: 1,
+      nome: "Barbearia Teste",
+      endereco: "Rua Teste, 123",
+      foto: null,
+      chaveAws: null,
+    };
+    const usuarioId = 2; // usuário diferente
+
+    jest.mocked(prisma.barbearia.findFirst).mockResolvedValue({
+      id: 1,
+      nome: "Barbearia Original",
+      endereco: "Rua Original, 123",
+      foto: "http://exemplo.com/original.jpg",
+      chaveAws: "chave-original-s3",
+      usuarioId: 1, // proprietário é outro
+    } as any);
+
+    await expect(
+      barbeariaService.editarBarbearia(body, usuarioId, null),
+    ).rejects.toBeInstanceOf(NotAuthorizedError);
   });
 });

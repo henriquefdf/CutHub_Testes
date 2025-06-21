@@ -1,20 +1,20 @@
 // src/middlewares/errorHandler.ts
-import { Request, Response, NextFunction } from 'express';
-import { JsonWebTokenError } from 'jsonwebtoken';
-import { NotAuthorizedError } from '../../errors/NotAuthorizedError';
-import { InvalidParamError } from '../../errors/InvalidParamError';
-import { TokenError } from '../../errors/TokenError';
-import { QueryError } from '../../errors/QueryError';
-import { InvalidRouteError } from '../../errors/InvalidRouteError';
-import { PermissionError } from '../../errors/PermissionError';
-import { LoginError } from '../../errors/LoginError';
-import { codigoStatus } from '../../utils/constants/statusCodes';
+import { Request, Response, NextFunction } from "express";
+import { JsonWebTokenError } from "jsonwebtoken";
+import { NotAuthorizedError } from "../../errors/NotAuthorizedError";
+import { InvalidParamError } from "../../errors/InvalidParamError";
+import { TokenError } from "../../errors/TokenError";
+import { QueryError } from "../../errors/QueryError";
+import { InvalidRouteError } from "../../errors/InvalidRouteError";
+import { PermissionError } from "../../errors/PermissionError";
+import { LoginError } from "../../errors/LoginError";
+import { codigoStatus } from "../../utils/constants/statusCodes";
 
 export default function errorHandler(
   error: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   console.error(error);
 

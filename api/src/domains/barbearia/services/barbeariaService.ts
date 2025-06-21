@@ -1,7 +1,8 @@
 import prisma from "../../../../config/prismaClient";
 import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";
 import { Barbearia } from "@prisma/client";
-import { deleteObject } from "../../../../utils/functions/aws";
+//import { deleteObject } from "../../../../utils/functions/aws";
+
 
 type BarbeariaInterface = Omit<Barbearia, "id" | "usuarioId"> & {
   foto?: string | null;
@@ -44,15 +45,15 @@ export class barbeariaService {
     }
 
     if (file) {
-      if (barbearia?.chaveAws) {
+/*       if (barbearia?.chaveAws) {
         deleteObject(barbearia.chaveAws);
-      }
+      } */
       body.foto = (file as Express.MulterS3.File).location;
       body.chaveAws = (file as Express.MulterS3.File).key;
-    } else {
+    } /* else {
       body.foto = barbearia?.foto;
       body.chaveAws = barbearia?.chaveAws;
-    }
+    } */
 
     if (!body.id) throw new Error("Id da barbearia não informado.");
 

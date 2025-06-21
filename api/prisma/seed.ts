@@ -13,7 +13,7 @@ async function seedDatabase() {
 
     if (barbeiros.length < 10) {
       throw new Error(
-        `Esperava ao menos 10 barbeiros cadastrados, mas encontrou ${barbeiros.length}.`
+        `Esperava ao menos 10 barbeiros cadastrados, mas encontrou ${barbeiros.length}.`,
       );
     }
 
@@ -120,9 +120,8 @@ async function seedDatabase() {
           },
         });
       }
-      barbearia.push();
     }
-  
+
     console.log("✅ Seed concluída com sucesso!");
   } catch (error) {
     console.error("❌ Erro ao rodar seed:", error);

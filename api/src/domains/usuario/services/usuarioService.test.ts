@@ -44,7 +44,9 @@ describe("UsuarioService", () => {
   it("criptografa uma senha", async () => {
     const password = "password";
     const hashedPassword = await hash(password, 10);
-    expect(await UsuarioService.encryptPassword(password)).toEqual(hashedPassword);
+    expect(await UsuarioService.encryptPassword(password)).toEqual(
+      hashedPassword,
+    );
   });
 
   it("cria um novo usuário", async () => {
@@ -54,8 +56,8 @@ describe("UsuarioService", () => {
       email: "test@test.com",
       senha: "password",
       tipo: "cliente",
-      foto: null,
-      chaveAws: null,
+      foto: 'teste_foto_url.jpg',
+      chaveAws: 'teste_chave_aws',
       tokenRecPass: null,
       dateRecPass: null,
     };
@@ -63,7 +65,10 @@ describe("UsuarioService", () => {
     (prisma.usuario.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.usuario.create as jest.Mock).mockResolvedValue(novoUsuario);
 
-    const resultado = await UsuarioService.criar(novoUsuario, {} as Express.Multer.File);
+    const resultado = await UsuarioService.criar(
+      novoUsuario,
+      {} as Express.Multer.File,
+    );
     expect(resultado).toEqual(novoUsuario);
   });
 
@@ -93,10 +98,14 @@ describe("UsuarioService", () => {
     };
 
     (prisma.usuario.findUnique as jest.Mock).mockResolvedValue(null);
-    (prisma.usuario.create as jest.Mock).mockRejectedValue(new QueryError("Database write failed"));
+    (prisma.usuario.create as jest.Mock).mockRejectedValue(
+      new QueryError("Database write failed"),
+    );
     (deleteObject as jest.Mock).mockResolvedValue(true);
 
-    await expect(UsuarioService.criar(novoUsuario, mockFile)).rejects.toThrow(QueryError);
+    await expect(UsuarioService.criar(novoUsuario, mockFile)).rejects.toThrow(
+      QueryError,
+    );
   });
 
   it("obtém um usuário pelo id", async () => {
@@ -175,7 +184,11 @@ describe("UsuarioService", () => {
 
     (prisma.usuario.update as jest.Mock).mockResolvedValue(usuarioAtualizado);
 
-    const resultado = await UsuarioService.updateUsuario(usuarioAtualizado, usuario, {} as Express.Multer.File);
+    const resultado = await UsuarioService.updateUsuario(
+      usuarioAtualizado,
+      usuario,
+      {} as Express.Multer.File,
+    );
     expect(resultado).toEqual(usuarioAtualizado);
   });
 
@@ -214,15 +227,21 @@ describe("UsuarioService", () => {
 
     (prisma.usuario.update as jest.Mock).mockResolvedValue(updatedUser);
     (deleteObject as jest.Mock).mockResolvedValue(true);
-    const result = await UsuarioService.updateUsuario(updatedUser, oldUser, mockNewFile);
+    const result = await UsuarioService.updateUsuario(
+      updatedUser,
+      oldUser,
+      mockNewFile,
+    );
 
-    expect(prisma.usuario.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: oldUser.id },
-      data: expect.objectContaining({
-        foto: updatedUser.foto,
-        chaveAws: updatedUser.chaveAws,
+    expect(prisma.usuario.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: oldUser.id },
+        data: expect.objectContaining({
+          foto: updatedUser.foto,
+          chaveAws: updatedUser.chaveAws,
+        }),
       }),
-    }));
+    );
     expect(result).toEqual(updatedUser);
   });
 
@@ -263,7 +282,9 @@ describe("UsuarioService", () => {
 
     await UsuarioService.deleteUsuario(usuarioSemFoto);
     expect(deleteObject).not.toHaveBeenCalled();
-    expect(prisma.usuario.delete).toHaveBeenCalledWith({ where: { id: usuarioSemFoto.id } });
+    expect(prisma.usuario.delete).toHaveBeenCalledWith({
+      where: { id: usuarioSemFoto.id },
+    });
   });
 
   it("atualiza a senha de um usuário", async () => {
@@ -311,7 +332,9 @@ describe("UsuarioService", () => {
         dateRecPass: null,
       };
 
-      await expect(UsuarioService.criar(body as any, null as any)).rejects.toThrow(QueryError);
+      await expect(
+        UsuarioService.criar(body as any, null as any),
+      ).rejects.toThrow(QueryError);
     });
   });
 
@@ -326,7 +349,7 @@ describe("UsuarioService", () => {
       (prisma.usuario.findFirst as jest.Mock).mockResolvedValue(user);
 
       await expect(
-        UsuarioService.validateToken("user@test.com", "wrongToken", "pass")
+        UsuarioService.validateToken("user@test.com", "wrongToken", "pass"),
       ).rejects.toThrow(InvalidParamError);
     });
 
@@ -342,7 +365,7 @@ describe("UsuarioService", () => {
       (prisma.usuario.findFirst as jest.Mock).mockResolvedValue(user);
 
       await expect(
-        UsuarioService.validateToken("user2@test.com", "token123", "pass")
+        UsuarioService.validateToken("user2@test.com", "token123", "pass"),
       ).rejects.toThrow(InvalidParamError);
     });
 
@@ -362,7 +385,7 @@ describe("UsuarioService", () => {
         .mockResolvedValue(Promise.resolve());
 
       await expect(
-        UsuarioService.validateToken("user3@test.com", "tokenValid", "newPass")
+        UsuarioService.validateToken("user3@test.com", "tokenValid", "newPass"),
       ).resolves.toBeUndefined();
       expect(updateSpy).toHaveBeenCalledWith("newPass", user.id);
     });
@@ -370,7 +393,11 @@ describe("UsuarioService", () => {
     it("deve lançar QueryError se o usuário não for encontrado para validação de token", async () => {
       (prisma.usuario.findFirst as jest.Mock).mockResolvedValue(null);
       await expect(
-        UsuarioService.validateToken("nonexistent@test.com", "anyToken", "newPass")
+        UsuarioService.validateToken(
+          "nonexistent@test.com",
+          "anyToken",
+          "newPass",
+        ),
       ).rejects.toThrow(InvalidParamError);
     });
   });
@@ -378,7 +405,9 @@ describe("UsuarioService", () => {
   describe("createToken cases", () => {
     it("deve lançar QueryError quando o usuário for null", async () => {
       (prisma.usuario.findFirst as jest.Mock).mockResolvedValue(null);
-      await expect(UsuarioService.createToken("nouser@test.com")).rejects.toThrow(QueryError);
+      await expect(
+        UsuarioService.createToken("nouser@test.com"),
+      ).rejects.toThrow(QueryError);
     });
 
     it("deve lançar um erro se a atualização do token no banco de dados falhar", async () => {
@@ -395,11 +424,17 @@ describe("UsuarioService", () => {
       };
 
       (prisma.usuario.findFirst as jest.Mock).mockResolvedValue(user);
-      (crypto.randomBytes as jest.Mock).mockReturnValue(Buffer.from("someToken"));
-      (prisma.usuario.update as jest.Mock).mockRejectedValue(new Error("Database update error"));
+      (crypto.randomBytes as jest.Mock).mockReturnValue(
+        Buffer.from("someToken"),
+      );
+      (prisma.usuario.update as jest.Mock).mockRejectedValue(
+        new Error("Database update error"),
+      );
       (enviaEmail as jest.Mock).mockResolvedValue(true);
 
-      await expect(UsuarioService.createToken(user.email)).rejects.toThrow(Error);
+      await expect(UsuarioService.createToken(user.email)).rejects.toThrow(
+        Error,
+      );
       expect(enviaEmail).not.toHaveBeenCalled();
     });
 
@@ -417,15 +452,21 @@ describe("UsuarioService", () => {
       };
 
       (prisma.usuario.findFirst as jest.Mock).mockResolvedValue(user);
-      (crypto.randomBytes as jest.Mock).mockReturnValue(Buffer.from("someToken"));
+      (crypto.randomBytes as jest.Mock).mockReturnValue(
+        Buffer.from("someToken"),
+      );
       (prisma.usuario.update as jest.Mock).mockResolvedValue({
         ...user,
         tokenRecPass: "someToken",
         dateRecPass: new Date(),
       });
-      (enviaEmail as jest.Mock).mockRejectedValue(new Error("Email sending failed"));
+      (enviaEmail as jest.Mock).mockRejectedValue(
+        new Error("Email sending failed"),
+      );
 
-      await expect(UsuarioService.createToken(user.email)).rejects.toThrow(Error);
+      await expect(UsuarioService.createToken(user.email)).rejects.toThrow(
+        Error,
+      );
       expect(prisma.usuario.update).toHaveBeenCalled();
     });
   });

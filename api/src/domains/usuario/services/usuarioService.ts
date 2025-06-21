@@ -5,7 +5,7 @@ import { hash } from "bcrypt";
 import { InvalidParamError } from "../../../../errors/InvalidParamError";
 import crypto from "crypto";
 import { enviaEmail } from "../../../../utils/functions/enviaEmail";
-import { deleteObject } from "../../../../utils/functions/aws";
+//import { deleteObject } from "../../../../utils/functions/aws";
 
 class UsuarioService {
   async encryptPassword(password: string) {
@@ -50,23 +50,23 @@ class UsuarioService {
     usuarioLogado: Usuario,
     foto?: Express.Multer.File | Express.MulterS3.File,
   ) {
-    const findUser = await prisma.usuario.findUnique({
+/*     const findUser = await prisma.usuario.findUnique({
       where: { id: usuarioLogado.id },
-    });
+    }); */
 
     if (body.senha) {
       body.senha = await this.encryptPassword(body.senha);
     }
     if (foto) {
-      if (findUser?.chaveAws) {
+/*       if (findUser?.chaveAws) {
         deleteObject(findUser.chaveAws);
-      }
+      } */
       body.foto = (foto as Express.MulterS3.File).location;
       body.chaveAws = (foto as Express.MulterS3.File).key;
-    } else {
+    } /* else {
       body.foto = findUser?.foto || null;
       body.chaveAws = findUser?.chaveAws || null;
-    }
+    } */
 
     const usuario = await prisma.usuario.update({
       where: { id: usuarioLogado.id },

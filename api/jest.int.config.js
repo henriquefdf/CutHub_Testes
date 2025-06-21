@@ -5,6 +5,6 @@ module.exports = {
   verbose: true,
   collectCoverage: true,
   collectCoverageFrom: ["src/**/*Service.ts"],
-  setupFiles: ['./jest.int.env.ts'],
-  testMatch: ['**/*.int.test.ts'],
+  setupFiles: ["./jest.int.env.ts"],
+  testMatch: ["**/*.int.test.ts"],
 };

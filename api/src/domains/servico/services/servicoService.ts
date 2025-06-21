@@ -2,7 +2,7 @@ import prisma from "../../../../config/prismaClient";
 import { NotAuthorizedError } from "../../../../errors/NotAuthorizedError";
 import { QueryError } from "../../../../errors/QueryError";
 import { Servico } from "@prisma/client";
-import { deleteObject } from "../../../../utils/functions/aws";
+//import { deleteObject } from "../../../../utils/functions/aws";
 
 type ServicoInterface = Omit<Servico, "barbeariaId"> & {
   foto?: string | null;
@@ -71,15 +71,15 @@ export class servicoService {
       throw new QueryError("Serviço já existe.");
 
     if (file) {
-      if (servico?.chaveAws) {
+/*       if (servico?.chaveAws) {
         deleteObject(servico.chaveAws);
-      }
+      } */
       body.foto = (file as Express.MulterS3.File).location;
       body.chaveAws = (file as Express.MulterS3.File).key;
-    } else {
+    } /* else {
       body.foto = servico?.foto;
       body.chaveAws = servico?.chaveAws;
-    }
+    } */
 
     const servicoAtualizado = await prisma.servico.update({
       where: { id: +body.id },
