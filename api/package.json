@@ -31,7 +31,7 @@
     "start": "npx prisma generate && npx prisma migrate deploy && nodemon index.ts",
     "dev": "npx prisma generate && nodemon index.ts",
     "test": "jest --coverage --testPathIgnorePatterns=\".*\\.int\\.test\\.ts$\"",
-    "test:int": "cross-env NODE_ENV=test dotenv -e .env.test -- prisma migrate reset --force --skip-seed --skip-generate && jest --coverage --config jest.int.config.js --runInBand",
+    "test:int": "cross-env NODE_ENV=test dotenv -e .env.test -- prisma migrate reset --force --skip-seed --skip-generate && jest --coverage --config jest.config.int.js --runInBand",
     "test:all": "cross-env NODE_ENV=test dotenv -e .env.test -- prisma migrate reset --force --skip-seed --skip-generate && jest --coverage --runInBand",
     "seed": "ts-node prisma/seed.ts"
   },
